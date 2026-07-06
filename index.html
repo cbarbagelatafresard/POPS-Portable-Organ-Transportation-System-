@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>POPS — Sistema de conservación de órganos</title>
+  <link rel="icon" type="image/png" href="logo.png"/>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════
+       PANTALLA 1 — PREENFRIAMIENTO (INICIAL)
+  ═══════════════════════════════════════ -->
+  <div id="screen-cooling" class="screen active">
+    <div class="cooling-layout">
+      <div class="cooling-card">
+        <img src="logo.png" alt="POPS logo" class="cooling-logo-full"/>
+        <h2 class="cooling-title">Preparando la conservadora</h2>
+        <p class="cooling-sub">Bajando la temperatura al rango seguro (2–8°C).<br/>Este proceso puede tardar algunos minutos.</p>
+        <div class="cooling-temp-wrap">
+          <div class="cooling-temp-label">Temperatura actual</div>
+          <div class="cooling-temp-val"><span id="cooling-temp">—</span><span class="cooling-unit">°C</span></div>
+          <div class="cooling-bar-wrap">
+            <div class="cooling-bar-track">
+              <div class="cooling-bar-fill" id="cooling-bar"></div>
+              <div class="cooling-bar-target"></div>
+            </div>
+            <div class="cooling-bar-labels">
+              <span>0°C</span>
+              <span class="target-label">4°C objetivo</span>
+              <span>25°C</span>
+            </div>
+          </div>
+        </div>
+        <div class="cooling-battery">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="10" x2="23" y2="14"/></svg>
+          Batería: <span id="cooling-bateria">—</span>%
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PANTALLA 2 — LISTA PARA INSERTAR ÓRGANO
+  ═══════════════════════════════════════ -->
+  <div id="screen-ready" class="screen">
+    <div class="cooling-layout">
+      <div class="cooling-card ready-card">
+        <img src="logo.png" alt="POPS logo" class="cooling-logo-small"/>
+        <div class="ready-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h2 class="cooling-title" style="color:var(--green)">¡Lista para usar!</h2>
+        <p class="cooling-sub">La conservadora alcanzó el rango de temperatura seguro.<br/>Insertá el órgano y presioná el botón para comenzar el registro.</p>
+        <div class="ready-temp"><span id="ready-temp">—</span>°C</div>
+        <div class="cooling-battery">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="10" x2="23" y2="14"/></svg>
+          Batería: <span id="ready-bateria">—</span>%
+        </div>
+        <button class="btn-primary btn-comenzar" onclick="comenzarRegistro()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Insertar órgano e iniciar monitoreo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PANTALLA 3 — DASHBOARD DE MONITOREO
+  ═══════════════════════════════════════ -->
+  <div id="screen-dash" class="screen">
+
+    <header class="dash-header">
+      <div class="dash-header-left">
+        <span class="dash-logo">POPS</span>
+        <div class="dash-session-info">
+          <span id="dash-organo-badge" class="organ-badge hidden">—</span>
+          <span id="dash-medico" class="dash-meta-text"></span>
+          <span id="dash-meta-sep1" class="dash-meta-sep hidden">·</span>
+          <span id="dash-ruta" class="dash-meta-text"></span>
+          <span id="dash-meta-sep2" class="dash-meta-sep hidden">·</span>
+          <span id="dash-transporte" class="dash-meta-text"></span>
+        </div>
+      </div>
+      <div class="dash-header-right">
+        <div id="connection-status" class="conn-badge conn-ok">
+          <span class="conn-dot"></span>
+          <span class="conn-label">Conectado</span>
+        </div>
+        <div class="timer-wrap">
+          <span class="timer-label">Tiempo</span>
+          <span id="dash-timer" class="timer-value">00:00</span>
+        </div>
+        <button class="btn-end" onclick="mostrarOpcionesFinalizar()">Finalizar</button>
+      </div>
+    </header>
+
+    <div id="alert-disconnected" class="alert-banner alert-danger hidden">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Sin conexión con el dispositivo — mostrando último dato conocido
+    </div>
+    <div id="banner-temp" class="alert-banner alert-danger hidden">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span id="banner-temp-msg">Temperatura fuera del rango seguro</span>
+    </div>
+    <div id="banner-tapa" class="alert-banner alert-warning hidden">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Tapa abierta — verificar cierre del dispositivo
+    </div>
+    <div id="banner-bateria" class="alert-banner alert-warning hidden">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="10" x2="23" y2="14"/></svg>
+      <span id="banner-bateria-msg">Batería baja</span>
+    </div>
+
+    <div id="popup-alarma" class="popup-overlay hidden">
+      <div class="popup-card popup-danger">
+        <div class="popup-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h3 class="popup-title" id="popup-title">Alerta crítica</h3>
+        <p class="popup-msg" id="popup-msg">—</p>
+        <button class="btn-primary popup-btn" onclick="cerrarPopup()">Entendido</button>
+      </div>
+    </div>
+
+    <div id="toast-ok" class="toast-ok hidden">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span id="toast-ok-msg">Situación corregida</span>
+    </div>
+
+    <main class="dash-main">
+      <section class="metrics-grid">
+        <div class="metric-card metric-temp">
+          <div class="metric-label">Temperatura interna</div>
+          <div class="metric-value" id="val-temp">—</div>
+          <div class="metric-unit">°C</div>
+          <div class="metric-sub">Setpoint: <span id="val-setpoint">4</span>°C</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Batería</div>
+          <div class="metric-value" id="val-bateria">—</div>
+          <div class="metric-unit">%</div>
+          <div class="metric-sub" id="sub-bateria">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Alimentación</div>
+          <div class="metric-value metric-small" id="val-alimentacion">—</div>
+          <div class="metric-sub" id="sub-alimentacion">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Tapa</div>
+          <div class="metric-value metric-small" id="val-tapa">—</div>
+          <div class="metric-sub" id="sub-tapa">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Caídas</div>
+          <div class="metric-value metric-small" id="val-caidas">—</div>
+          <div class="metric-sub" id="sub-caidas">sin eventos</div>
+        </div>
+      </section>
+
+      <section class="dash-bottom">
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Temperatura en el tiempo</span>
+            <div class="chart-legend-wrap">
+              <span class="legend-item"><span class="legend-line-navy"></span>Temperatura</span>
+              <span class="legend-item"><span class="legend-line-orange"></span>Setpoint</span>
+              <span class="legend-item"><span class="legend-line-red-dash"></span>Límites (2°C / 8°C)</span>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="temp-chart"></canvas>
+          </div>
+        </div>
+        <div class="log-card">
+          <div class="log-header">Log de eventos</div>
+          <div class="log-list" id="event-log">
+            <div class="log-empty">Esperando eventos…</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PANTALLA 4 — OPCIONES DE FINALIZACIÓN
+  ═══════════════════════════════════════ -->
+  <div id="screen-finalizar" class="screen">
+    <div class="cooling-layout">
+      <div class="cooling-card">
+        <h2 class="cooling-title">Finalizar sesión</h2>
+        <p class="cooling-sub">¿Querés guardar los datos registrados durante este transporte?</p>
+
+        <button class="btn-primary btn-finalizar-guardar" onclick="finalizarConGuardado()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Finalizar con almacenamiento de datos
+        </button>
+
+        <button class="btn-secondary" onclick="finalizarSinGuardado()">
+          Finalizar sin guardar datos
+        </button>
+
+        <button class="btn-cancelar" onclick="cancelarFinalizar()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PANTALLA 5 — FORMULARIO DE DATOS (al guardar)
+  ═══════════════════════════════════════ -->
+  <div id="screen-form" class="screen">
+    <div class="form-layout">
+      <div class="form-brand">
+        <div class="brand-logo-wrap">
+          <div class="brand-logo-circle">
+            <img src="logo.png" alt="POPS logo" class="brand-logo-img" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='flex'"/>
+            <div id="logo-fallback" class="logo-fallback">
+              <svg viewBox="0 0 80 80" width="56" height="56" fill="none">
+                <rect x="10" y="18" width="60" height="44" rx="10" fill="#1a2e44" stroke="#f0ebe0" stroke-width="2"/>
+                <rect x="28" y="10" width="24" height="12" rx="4" fill="#1a2e44" stroke="#f0ebe0" stroke-width="2"/>
+                <rect x="14" y="28" width="52" height="28" rx="6" fill="#b8c8d4"/>
+                <path d="M44 44 C44 40 48 38 52 38 C56 38 60 40 60 44 C60 50 52 56 52 56 C52 56 44 50 44 44Z" fill="#e74c3c"/>
+                <path d="M44 44 C44 40 40 38 36 40 C36 40 36 48 44 44Z" fill="#c0392b"/>
+              </svg>
+            </div>
+          </div>
+          <h1 class="brand-name">POPS</h1>
+          <p class="brand-tagline">Portable Organ Preservation System</p>
+        </div>
+        <div class="brand-info">
+          <div class="brand-stat">
+            <span class="stat-num">2–8°C</span>
+            <span class="stat-label">rango seguro</span>
+          </div>
+          <div class="brand-stat">
+            <span class="stat-num">Control</span>
+            <span class="stat-label">temperatura activa</span>
+          </div>
+          <div class="brand-stat">
+            <span class="stat-num">WiFi</span>
+            <span class="stat-label">monitoreo remoto</span>
+          </div>
+        </div>
+        <p class="brand-credits">Instrumentación Biomédica II · Grupo 3 · ITBA 2026</p>
+      </div>
+
+      <div class="form-panel">
+        <div class="form-card">
+          <div class="form-header">
+            <h2 class="form-title">Datos de la sesión</h2>
+            <p class="form-subtitle">Completá los datos para guardar el reporte del transporte</p>
+          </div>
+          <form id="transplant-form" novalidate>
+
+            <div class="form-section">
+              <div class="form-section-label">Información del médico</div>
+              <div class="form-grid col-3">
+                <div class="field">
+                  <label for="titulo">Título</label>
+                  <select id="titulo" required>
+                    <option value="" disabled selected>Seleccionar…</option>
+                    <option value="Dr.">Dr.</option>
+                    <option value="Dra.">Dra.</option>
+                  </select>
+                </div>
+                <div class="field" style="grid-column: span 2;">
+                  <label for="medico">Apellido y nombre</label>
+                  <input type="text" id="medico" placeholder="Apellido, Nombre" required/>
+                </div>
+              </div>
+              <div class="form-grid col-1" style="margin-top:8px;">
+                <div class="field">
+                  <label for="matricula">N° de matrícula</label>
+                  <input type="text" id="matricula" placeholder="Ej: 12345" required/>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-label">Información del trasplante</div>
+              <div class="form-grid col-2">
+                <div class="field">
+                  <label for="organo">Órgano</label>
+                  <select id="organo" required>
+                    <option value="" disabled selected>Seleccionar…</option>
+                    <option value="Riñón">Riñón</option>
+                    <option value="Hígado">Hígado</option>
+                    <option value="Corazón">Corazón</option>
+                    <option value="Páncreas">Páncreas</option>
+                    <option value="Córnea">Córnea</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-label">Origen y destino</div>
+              <div class="form-grid col-2">
+                <div class="field">
+                  <label for="origen">Lugar de origen</label>
+                  <input type="text" id="origen" placeholder="Hospital, ciudad" required/>
+                </div>
+                <div class="field">
+                  <label for="destino">Lugar de destino</label>
+                  <input type="text" id="destino" placeholder="Hospital, ciudad" required/>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-label">Logística</div>
+              <div class="form-grid col-3">
+                <div class="field">
+                  <label for="hora-extraccion">Hora de extracción</label>
+                  <input type="time" id="hora-extraccion" required/>
+                </div>
+                <div class="field">
+                  <label for="tiempo-estimado">Tiempo estimado (min)</label>
+                  <input type="number" id="tiempo-estimado" placeholder="45" min="1" max="600" required/>
+                </div>
+                <div class="field">
+                  <label for="transporte">Método de transporte</label>
+                  <select id="transporte" required>
+                    <option value="" disabled selected>Seleccionar…</option>
+                    <option value="Ambulancia">Ambulancia</option>
+                    <option value="Avión">Avión</option>
+                    <option value="Helicóptero">Helicóptero</option>
+                    <option value="Auto">Auto</option>
+                    <option value="Intrahospitalario">Intrahospitalario</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div id="form-error" class="form-error hidden">
+              Completá todos los campos antes de continuar.
+            </div>
+
+            <button type="submit" class="btn-primary">
+              <span>Guardar y finalizar</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PANTALLA 6 — SESIÓN FINALIZADA
+  ═══════════════════════════════════════ -->
+  <div id="screen-end" class="screen">
+    <div class="end-card">
+      <div class="end-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h2 class="end-title">Sesión finalizada</h2>
+      <p class="end-sub" id="end-sub">El reporte fue descargado automáticamente.</p>
+      <div class="end-summary hidden" id="end-summary"></div>
+      <button class="btn-primary" onclick="volverAPreenfriamiento()">Nuevo viaje</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
