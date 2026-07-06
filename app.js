@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════
 // CONFIGURACIÓN
 // ═══════════════════════════════════════
-const ESP32_IP         = "172.20.83.242";
+const ESP32_IP         = "10.236.23.242";
 const ESP32_WS_URL     = "ws://" + ESP32_IP + ":81";
 const TEMP_MIN         = 2;
 const TEMP_MAX         = 8;
